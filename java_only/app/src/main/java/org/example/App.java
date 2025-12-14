@@ -6,18 +6,24 @@ import javax.crypto.*;
 import javax.crypto.spec.GCMParameterSpec;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Enumeration;
 import java.nio.file.Files;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class App {
+    static Logger Log = LoggerFactory.getLogger(App.class);
+
     public static Provider ensurePKCSImplementation(String configfilePath){
         Provider sunPkcs11 = Security.getProvider("SunPKCS11");
         Provider pkcsImplementation = sunPkcs11.configure(configfilePath);
@@ -30,14 +36,51 @@ public class App {
         throw new RuntimeException("No PKCS Implementation found");
     }
 
+    public static String encrypt(String message, Key publicKey){
+        Cipher encryptCipher = null;
+        try {
+            encryptCipher = Cipher.getInstance("RSA");
+            encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] secretMessageBytes = message.getBytes(StandardCharsets.UTF_8);
+            byte[] encryptedMessageBytes = encryptCipher.doFinal(secretMessageBytes);
+
+            return Base64.getEncoder().encodeToString(encryptedMessageBytes);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException |
+                 BadPaddingException e) {
+            Log.error(e.getMessage());
+            return "";
+        }
+    }
+
+    public static String decrypt(String ciphertext, Key privatKey){
+        Cipher decryptCipher=null;
+        try {
+            decryptCipher=Cipher.getInstance("RSA");
+            decryptCipher.init(Cipher.DECRYPT_MODE,privatKey);
+            // decode from string back to byte array
+            byte[] secretMessageBytes = ciphertext.getBytes(StandardCharsets.UTF_8);
+
+            byte[] encryptedMessageBytes=Base64.getDecoder().decode(secretMessageBytes);
+
+            byte[] decryptedMessageBytes = decryptCipher.doFinal(encryptedMessageBytes);
+            String decryptedMessage = new String(decryptedMessageBytes, StandardCharsets.UTF_8);
+            return decryptedMessage;
+
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException |
+                 InvalidKeyException e) {
+            Log.error(e.getMessage());
+            return "";
+        }
+    }
 
     public static void main(String[] args) {
-
         try {
             String configFilePath = "/home/dimitri/Documents/HSLU/BAA/thesis_preliminary/java_only/pkcs11.cfg";
             String userPin = "123456789"; // The pin to unlock the HSM-TOKEN
             String keyID = "7777"; // The key identifier or alias
             String keyAlias="rsaGenesis";
+
+            Log.warn("LOGGER WORX");
 
             Provider pkcsImplementation=ensurePKCSImplementation(configFilePath);
 
@@ -50,13 +93,21 @@ public class App {
             RSAPublicKey publicKey = (RSAPublicKey)hsmKeyStore.getCertificate(keyAlias).getPublicKey();
             System.out.println(publicKey);
 
-            Enumeration<String> e =hsmKeyStore.aliases();
-            while (e.hasMoreElements()){
-                System.out.println(e.nextElement());
-            }
+            String message= "Java is an Island";
+            String encrypted=encrypt(message,publicKey);
+
+            System.out.println("ENCRYPTED MESSAGE IN BASE 64");
+            System.out.println(encrypted);
+
+            PrivateKey privateKey = (PrivateKey)hsmKeyStore.getKey(keyAlias, userPin.toCharArray());
+            String decrypted=decrypt(encrypted,privateKey);
+            System.out.println("DECRYPTED MESSAGE");
+            System.out.println(decrypted);
 
 
-        }catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e){
-            System.out.println(e);}
+        }catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException |
+                UnrecoverableKeyException e){
+            Log.error(e.getMessage());
+        }
 
     }}
