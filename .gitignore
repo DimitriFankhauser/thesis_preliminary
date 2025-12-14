@@ -35,3 +35,14 @@ bin/
 build/
 /bin1/
 java/build/**
+
+# first try before genesis script
+x509_old/
+
+# certificates and keys
+*.crt
+*.der
+*.csr
+*.srl
+*.pem
+*.p12
