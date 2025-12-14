@@ -29,7 +29,7 @@ public class App {
         Provider pkcsImplementation = sunPkcs11.configure(configfilePath);
 
         if (pkcsImplementation != null) {
-            System.out.println("PKCS implementation is not null");
+            Log.info("PKCS implementation is not null");
             Security.addProvider(pkcsImplementation);
             return pkcsImplementation;
         }
@@ -80,8 +80,6 @@ public class App {
             String keyID = "7777"; // The key identifier or alias
             String keyAlias="rsaGenesis";
 
-            Log.warn("LOGGER WORX");
-
             Provider pkcsImplementation=ensurePKCSImplementation(configFilePath);
 
 
@@ -91,18 +89,15 @@ public class App {
             hsmKeyStore.load(null, userPin.toCharArray());
 
             RSAPublicKey publicKey = (RSAPublicKey)hsmKeyStore.getCertificate(keyAlias).getPublicKey();
-            System.out.println(publicKey);
 
             String message= "Java is an Island";
             String encrypted=encrypt(message,publicKey);
 
-            System.out.println("ENCRYPTED MESSAGE IN BASE 64");
-            System.out.println(encrypted);
-
             PrivateKey privateKey = (PrivateKey)hsmKeyStore.getKey(keyAlias, userPin.toCharArray());
             String decrypted=decrypt(encrypted,privateKey);
-            System.out.println("DECRYPTED MESSAGE");
-            System.out.println(decrypted);
+            Log.info("Decrypted Message: "+decrypted);
+
+
 
 
         }catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException |
