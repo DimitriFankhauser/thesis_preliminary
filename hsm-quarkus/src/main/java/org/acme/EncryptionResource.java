@@ -10,25 +10,6 @@ import org.jboss.resteasy.reactive.ResponseStatus;
 @Path("/crypto")
 
 public class EncryptionResource {
-
-    @ResponseStatus(200)
-    @POST
-    @Path("/decryptRSA")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.TEXT_PLAIN)
-    public String decrypt(EncryptableMessage encryptableMessage) throws NoSuchAlgorithmException {
-        String message = encryptableMessage.message;
-        try {
-            PublicKey pk= ConfigLoader.loadConfig();
-            Log.info(pk.getEncoded());
-        }catch (Exception e){
-            Log.error(e);
-        }
-        //TODO: decrypt the RSA-encrypted message and return it
-        return "decrypted RSA-Message";
-
-    }
-
     @ResponseStatus(200)
     @POST
     @Path("/encryptRSA")
@@ -38,14 +19,15 @@ public class EncryptionResource {
         String message = encryptableMessage.message;
         Log.info(message);
         try {
-            PublicKey pk= ConfigLoader.loadConfig();
-            Log.info(pk.getEncoded());
+            RsaUtil rsaUtil= new RsaUtil();
+            String ciphertext=rsaUtil.encrypt(encryptableMessage.message);
+            Log.info(ciphertext);
+            return ciphertext;
         }catch (Exception e){
             Log.error(e);
         }
         //TODO: decrypt the RSA-encrypted message and return it
-        return "encrypted RSA-Message";
-
+        return "";
     }
 }
 

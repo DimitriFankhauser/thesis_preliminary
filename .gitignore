@@ -46,3 +46,4 @@ x509_old/
 *.srl
 *.pem
 *.p12
+/.vscode/**
