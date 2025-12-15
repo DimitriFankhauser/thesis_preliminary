@@ -53,6 +53,7 @@ public class RsaUtil {
             RSAPublicKey publicKey = (RSAPublicKey) hsmKeyStore.getCertificate(this.keyAlias).getPublicKey();
             encryptCipher = Cipher.getInstance("RSA");
             encryptCipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            
             byte[] secretMessageBytes = message.getBytes(StandardCharsets.UTF_8);
             byte[] encryptedMessageBytes = encryptCipher.doFinal(secretMessageBytes);
 

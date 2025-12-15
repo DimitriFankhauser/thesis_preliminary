@@ -2,7 +2,7 @@ package org.acme;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-
+import jakarta.ws.rs.core.Response;
 import java.security.*;
 import io.quarkus.logging.Log;
 import org.jboss.resteasy.reactive.ResponseStatus;
@@ -15,18 +15,18 @@ public class EncryptionResource {
     @Path("/encryptRSA")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String encrypt(EncryptableMessage encryptableMessage) throws NoSuchAlgorithmException {
+    public Response encrypt(EncryptableMessage encryptableMessage) throws NoSuchAlgorithmException {
         Log.info(encryptableMessage.message);
         try {
             RsaUtil rsaUtil = new RsaUtil();
             String ciphertext = rsaUtil.encrypt(encryptableMessage.message);
             Log.info(ciphertext);
-            return ciphertext;
+            return Response.ok(ciphertext).build();
         } catch (Exception e) {
             Log.error(e);
+            return Response.serverError().build();
+
         }
-        // TODO: decrypt the RSA-encrypted message and return it
-        return "";
     }
 
     @ResponseStatus(200)
@@ -34,17 +34,16 @@ public class EncryptionResource {
     @Path("/decryptRSA")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
-    public String decrypt(EncryptableMessage ciphertext) throws NoSuchAlgorithmException {
+    public Response decrypt(EncryptableMessage ciphertext) throws NoSuchAlgorithmException {
         try {
             Log.info("received ciphertext" + ciphertext.message);
             RsaUtil rsaUtil = new RsaUtil();
             String message = rsaUtil.decrypt(ciphertext.message);
             Log.info(message);
-            return message;
+            return Response.ok(message).build();
         } catch (Exception e) {
             Log.error(e);
+            return Response.serverError().build();
         }
-        // TODO: decrypt the RSA-encrypted message and return it
-        return "";
     }
 }
