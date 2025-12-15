@@ -11,7 +11,6 @@ import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 public class RsaUtil {
     private Logger Log = LoggerFactory.getLogger(RsaUtil.class);
     private String configFilePath;
@@ -29,14 +28,14 @@ public class RsaUtil {
     }
 
     public RsaUtil(String configFilePath, String userPin, String keyID, String keyAlias) {
-        this.configFilePath=configFilePath;
-        this.userPin=userPin;
-        this.keyID=keyID;
-        this.keyAlias=keyAlias;
+        this.configFilePath = configFilePath;
+        this.userPin = userPin;
+        this.keyID = keyID;
+        this.keyAlias = keyAlias;
         setup();
     }
 
-     private Provider ensurePKCSImplementation(String configfilePath) {
+    private Provider ensurePKCSImplementation(String configfilePath) {
         Provider sunPkcs11 = Security.getProvider("SunPKCS11");
         Provider pkcsImplementation = sunPkcs11.configure(configfilePath);
         if (pkcsImplementation != null) {
@@ -58,20 +57,20 @@ public class RsaUtil {
             byte[] encryptedMessageBytes = encryptCipher.doFinal(secretMessageBytes);
 
             return Base64.getEncoder().encodeToString(encryptedMessageBytes);
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException |
-                 BadPaddingException|KeyStoreException e) {
-            this.Log.error(e.getMessage());
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException
+                | BadPaddingException | KeyStoreException e) {
+            this.Log.error(e.getClass() + e.getMessage());
             return "";
         }
     }
 
-    public String decrypt(String ciphertext, Key privatKey) {
+    public String decrypt(String ciphertext) {
 
         Cipher decryptCipher = null;
         try {
             PrivateKey privateKey = (PrivateKey) hsmKeyStore.getKey(this.keyAlias, userPin.toCharArray());
-            decryptCipher = Cipher.getInstance("RSA");
-            decryptCipher.init(Cipher.DECRYPT_MODE, privatKey);
+            decryptCipher = Cipher.getInstance("RSA", this.hsmKeyStore.getProvider());
+            decryptCipher.init(Cipher.DECRYPT_MODE, privateKey);
             // decode from string back to byte array
             byte[] secretMessageBytes = ciphertext.getBytes(StandardCharsets.UTF_8);
 
@@ -81,15 +80,15 @@ public class RsaUtil {
             String decryptedMessage = new String(decryptedMessageBytes, StandardCharsets.UTF_8);
             return decryptedMessage;
 
-        } catch (NoSuchPaddingException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException | UnrecoverableKeyException|KeyStoreException|
-                 InvalidKeyException e) {
-            this.Log.error(e.getMessage());
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | IllegalBlockSizeException | BadPaddingException
+                | UnrecoverableKeyException | KeyStoreException | InvalidKeyException e) {
+            this.Log.error(e.getClass() + e.getMessage());
             return "";
         }
     }
 
     private void setup() {
-        this.Log= LoggerFactory.getLogger(RsaUtil.class);
+        this.Log = LoggerFactory.getLogger(RsaUtil.class);
         try {
             Provider pkcsImplementation = ensurePKCSImplementation(this.configFilePath);
             this.hsmKeyStore = KeyStore.getInstance("PKCS11", pkcsImplementation);
@@ -97,11 +96,8 @@ public class RsaUtil {
             // load keystore and log in
             this.hsmKeyStore.load(null, userPin.toCharArray());
 
-
-
-
         } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException e) {
-            Log.error(e.getMessage());
+            Log.error(e.getClass() + e.getMessage());
         }
 
     }

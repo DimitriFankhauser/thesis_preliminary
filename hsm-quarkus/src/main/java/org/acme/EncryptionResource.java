@@ -16,19 +16,35 @@ public class EncryptionResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.TEXT_PLAIN)
     public String encrypt(EncryptableMessage encryptableMessage) throws NoSuchAlgorithmException {
-        String message = encryptableMessage.message;
-        Log.info(message);
+        Log.info(encryptableMessage.message);
         try {
-            RsaUtil rsaUtil= new RsaUtil();
-            String ciphertext=rsaUtil.encrypt(encryptableMessage.message);
+            RsaUtil rsaUtil = new RsaUtil();
+            String ciphertext = rsaUtil.encrypt(encryptableMessage.message);
             Log.info(ciphertext);
             return ciphertext;
-        }catch (Exception e){
+        } catch (Exception e) {
             Log.error(e);
         }
-        //TODO: decrypt the RSA-encrypted message and return it
+        // TODO: decrypt the RSA-encrypted message and return it
+        return "";
+    }
+
+    @ResponseStatus(200)
+    @POST
+    @Path("/decryptRSA")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    public String decrypt(EncryptableMessage ciphertext) throws NoSuchAlgorithmException {
+        try {
+            Log.info("received ciphertext" + ciphertext.message);
+            RsaUtil rsaUtil = new RsaUtil();
+            String message = rsaUtil.decrypt(ciphertext.message);
+            Log.info(message);
+            return message;
+        } catch (Exception e) {
+            Log.error(e);
+        }
+        // TODO: decrypt the RSA-encrypted message and return it
         return "";
     }
 }
-
-
