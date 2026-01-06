@@ -1,0 +1,137 @@
+---
+- name: This is the Play name
+  hosts: all              
+  become: true            
+  roles:
+    - role: Comcast.sdkman
+      sdkman_user: ec2-user
+      sdkman_group: ec2-user
+      sdkman_auto_answer: true
+      sdkman_update: true
+      sdkman_install_packages:
+        - { candidate: java, version: 21.0.9-tem }
+      sdkman_defaults:
+        java: 21.0.9-tem
+  tasks:   
+    - name: Ensure git is installed
+      yum:
+        name: git
+        state: present
+    
+    - name: clone Repo
+      ansible.builtin.git:
+        repo: https://github.com/DimitriFankhauser/thesis_preliminary.git
+        dest: /home/ec2-user/thesis_preliminary
+        single_branch: yes
+        version: main
+    
+    - name: install softhsm 
+      yum:
+        name: softhsm.x86_64
+        state: present
+    
+    - name: check if pkcs11 directory exists
+      ansible.builtin.stat:
+        path: /usr/lib64/pkcs11
+      register: p
+    
+    - name: print if path exists
+      ansible.builtin.debug:
+        msg: "PKCS11-Directory exists"
+      when: p.stat.isdir is defined and p.stat.isdir
+    
+    - name: install pkcs11-tool
+      yum: 
+        name: opensc.x86_64
+        state: present 
+    
+    - name: install pkcs11-provider
+      yum: 
+        name: pkcs11-provider
+        state: present 
+    
+    - name: Ensure the softhsm group exists
+      group:
+        name: softhsm
+        state: present
+    
+    - name: Add ec2-user to the softhsm group
+      user:
+        name: ec2-user
+        groups: softhsm
+        append: yes
+    
+    - name: Remove old SoftHSM tokens directory
+      file:
+        path: /var/lib/softhsm
+        state: absent
+    
+    - name: Create SoftHSM parent directory
+      file:
+        path: /var/lib/softhsm
+        owner: ec2-user
+        group: softhsm
+        mode: '0770'
+        state: directory
+    
+    - name: Create SoftHSM tokens directory
+      file:
+        path: /var/lib/softhsm/tokens
+        owner: ec2-user
+        group: softhsm
+        mode: '0770'
+        state: directory
+    
+    - name: Disable SELinux (if SELinux is enforcing)
+      ansible.builtin.shell:
+        cmd: setenforce 0
+      ignore_errors: yes
+    
+    - name: Ensure the SoftHSM configuration file is readable
+      file:
+        path: /etc/softhsm2.conf
+        mode: '0644'
+    
+    - name: Set ownership of cloned repo to ec2-user
+      file:
+        path: /home/ec2-user/thesis_preliminary
+        owner: ec2-user
+        group: ec2-user
+        recurse: yes
+    
+    - name: make genesis-script executable
+      file:
+        path: /home/ec2-user/thesis_preliminary/pkcs11-scripts/GENESIS/genesis.sh
+        mode: '0755'
+        owner: ec2-user
+        group: ec2-user
+    
+    - name: Initialize a test token to verify SoftHSM works
+      ansible.builtin.shell:
+        cmd: softhsm2-util --init-token --slot 0 --label "test" --so-pin 1234 --pin 1234
+      become: yes
+      become_user: ec2-user
+      ignore_errors: yes
+      register: init_test
+    
+    - name: Display test token init result
+      ansible.builtin.debug:
+        var: init_test
+    
+    - name: Delete test token if it was created
+      ansible.builtin.shell:
+        cmd: softhsm2-util --delete-token --token test
+      become: yes
+      become_user: ec2-user
+      ignore_errors: yes
+      when: init_test.rc == 0
+    
+    - name: execute genesis script
+      ansible.builtin.shell:
+        cmd: /home/ec2-user/thesis_preliminary/pkcs11-scripts/GENESIS/genesis.sh
+        chdir: /home/ec2-user/thesis_preliminary/pkcs11-scripts/GENESIS/
+        executable: /bin/bash
+      become: yes
+      become_user: ec2-user
+      environment:
+        SOFTHSM2_CONF: /etc/softhsm2.conf

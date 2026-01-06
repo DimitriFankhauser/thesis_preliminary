@@ -47,3 +47,6 @@ x509_old/
 *.pem
 *.p12
 /.vscode/**
+
+inventory.*
+.terraform/*
