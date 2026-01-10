@@ -13,37 +13,20 @@ import org.slf4j.LoggerFactory;
 
 public class RsaUtil {
     private Logger Log = LoggerFactory.getLogger(RsaUtil.class);
-    private String configFilePath;
     private String userPin;
-    private String keyID;
     private String keyAlias;
     private KeyStore hsmKeyStore;
 
     public RsaUtil() {
-        this.configFilePath = "pkcs11.cfg";
         this.userPin = "123456789"; // The pin to unlock the HSM-TOKEN
-        this.keyID = "7777"; // The key identifier or alias
         this.keyAlias = "rsaGenesis";
         setup();
     }
 
     public RsaUtil(String configFilePath, String userPin, String keyID, String keyAlias) {
-        this.configFilePath = configFilePath;
         this.userPin = userPin;
-        this.keyID = keyID;
         this.keyAlias = keyAlias;
         setup();
-    }
-
-    private Provider ensurePKCSImplementation(String configfilePath) {
-        Provider sunPkcs11 = Security.getProvider("SunPKCS11");
-        Provider pkcsImplementation = sunPkcs11.configure(configfilePath);
-        if (pkcsImplementation != null) {
-            Log.info("PKCS implementation is not null");
-            Security.addProvider(pkcsImplementation);
-            return pkcsImplementation;
-        }
-        throw new RuntimeException("No PKCS Implementation found");
     }
 
     public String encrypt(String message) {
@@ -91,12 +74,9 @@ public class RsaUtil {
     private void setup() {
         this.Log = LoggerFactory.getLogger(RsaUtil.class);
         try {
-            Provider pkcsImplementation = ensurePKCSImplementation(this.configFilePath);
-            this.hsmKeyStore = KeyStore.getInstance("PKCS11", pkcsImplementation);
-
+            this.hsmKeyStore = KeyStore.getInstance("PKCS11");
             // load keystore and log in
             this.hsmKeyStore.load(null, userPin.toCharArray());
-
         } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException e) {
             Log.error(e.getClass() + e.getMessage());
         }
