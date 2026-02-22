@@ -49,4 +49,6 @@ x509_old/
 /.vscode/**
 
 inventory.*
-.terraform/*
+**/.terraform
+*.tfstate*
+*.terraform*

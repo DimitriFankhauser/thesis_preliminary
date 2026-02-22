@@ -73,10 +73,7 @@ public class App {
             String keyAlias="rsaGenesis";
 
             Provider pkcsImplementation=ensurePKCSImplementation(configFilePath);
-
-
             KeyStore hsmKeyStore = KeyStore.getInstance("PKCS11", pkcsImplementation);
-
             // load keystore and log in
             hsmKeyStore.load(null, userPin.toCharArray());
 

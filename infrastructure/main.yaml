@@ -1,5 +1,5 @@
 ---
-- name: This is the Play name
+- name: Setup Softhsm on AWS
   hosts: all              
   become: true            
   roles:
@@ -10,8 +10,10 @@
       sdkman_update: true
       sdkman_install_packages:
         - { candidate: java, version: 21.0.9-tem }
+        - { candidate: gradle, version: 9.2.1 }
       sdkman_defaults:
         java: 21.0.9-tem
+        gradle: 9.2.1
   tasks:   
     - name: Ensure git is installed
       yum:
