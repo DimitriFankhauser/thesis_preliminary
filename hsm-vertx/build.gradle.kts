@@ -35,6 +35,7 @@ dependencies {
   testImplementation("io.vertx:vertx-junit5")
   testImplementation("org.junit.jupiter:junit-jupiter:$junitJupiterVersion")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  compileOnly("io.vertx:vertx-config:5.0.8")
 }
 
 java {
