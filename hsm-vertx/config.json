@@ -1,0 +1,4 @@
+{
+  "port": 8080,
+  "message": "Hello from Vert.X, configured through config.json"
+}
