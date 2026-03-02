@@ -21,7 +21,8 @@ public class MainVerticle extends VerticleBase {
     ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(configStoreOptions));
 
     router.route().handler(BodyHandler.create());
-    RsaUtil rsaUtil = new RsaUtil();
+
+    Future<RsaUtil> rsaUtilFuture = retriever.getConfig().map(config -> new RsaUtil(config.getString("userpin"), config.getString("keyAlias")));
 
     router.get("/ping").handler(rc -> {
       retriever.getConfig().onSuccess(config -> {
@@ -34,14 +35,22 @@ public class MainVerticle extends VerticleBase {
     ;
     router.post("/crypto/encryptRSA").handler(rc -> {
       EncryptableMessage e = rc.body().asJsonObject().mapTo(EncryptableMessage.class);
-      String ciphertext = rsaUtil.encrypt(e.message);
-      rc.response().putHeader("content-type", "text/plain").end(ciphertext);
+
+      // if the future was successfully completed, use the returned RsaUtil object and encrypt with it
+      rsaUtilFuture.onSuccess(util -> {
+        String ciphertext = util.encrypt(e.message);
+        rc.response().putHeader("content-type", "text/plain").end(ciphertext);
+      });
     });
 
     router.post("/crypto/decryptRSA").handler(rc -> {
       EncryptableMessage e = rc.body().asJsonObject().mapTo(EncryptableMessage.class);
-      String cleartext = rsaUtil.decrypt(e.message);
-      rc.response().putHeader("content-type", "text/plain").end("Cleartext:  " + cleartext);
+
+      rsaUtilFuture.onSuccess(util -> {
+        String cleartext = util.decrypt(e.message);
+        rc.response().putHeader("content-type", "text/plain").end("Cleartext:  " + cleartext);
+      });
+
     });
 
 
