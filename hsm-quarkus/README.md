@@ -6,13 +6,39 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 
 ## Running the application in dev mode
 
-You can run your application in dev mode that enables live coding using:
+You can run your application in dev mode that enables live coding.
+
+With Gradle:
 
 ```shell script
-./gradlew quarkusDev
+./gradlew quarkusDev -Dhsm.user-pin=<your-hsm-pin> -Dhsm.key-alias=<your-key-alias>
+```
+
+With Maven:
+
+```shell script
+mvn quarkus:dev -Dhsm.user-pin=<your-hsm-pin> -Dhsm.key-alias=<your-key-alias>
 ```
 
 > **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
+
+## Testing with curl
+
+Encrypt a message:
+
+```shell script
+curl -X POST http://localhost:8080/crypto/encryptRSA \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1, "message": "Hello HSM!"}'
+```
+
+Decrypt (use the ciphertext returned by the encrypt call):
+
+```shell script
+curl -X POST http://localhost:8080/crypto/decryptRSA \
+  -H "Content-Type: application/json" \
+  -d '{"id": 1, "message": "<ciphertext>"}'
+```
 
 ## Packaging and running the application
 

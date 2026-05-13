@@ -1,5 +1,6 @@
 package org.acme;
 
+import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -10,6 +11,10 @@ import org.jboss.resteasy.reactive.ResponseStatus;
 @Path("/crypto")
 
 public class EncryptionResource {
+
+    @Inject
+    RsaUtil rsaUtil;
+
     @ResponseStatus(200)
     @POST
     @Path("/encryptRSA")
@@ -18,7 +23,6 @@ public class EncryptionResource {
     public Response encrypt(EncryptableMessage encryptableMessage) throws NoSuchAlgorithmException {
         Log.info(encryptableMessage.message);
         try {
-            RsaUtil rsaUtil = new RsaUtil();
             String ciphertext = rsaUtil.encrypt(encryptableMessage.message);
             Log.info(ciphertext);
             return Response.ok(ciphertext).build();
@@ -37,7 +41,6 @@ public class EncryptionResource {
     public Response decrypt(EncryptableMessage ciphertext) throws NoSuchAlgorithmException {
         try {
             Log.info("received ciphertext" + ciphertext.message);
-            RsaUtil rsaUtil = new RsaUtil();
             String message = rsaUtil.decrypt(ciphertext.message);
             Log.info(message);
             return Response.ok(message).build();

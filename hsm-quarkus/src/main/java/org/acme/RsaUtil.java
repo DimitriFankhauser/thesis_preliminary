@@ -8,24 +8,27 @@ import java.security.cert.CertificateException;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
 public class RsaUtil {
     private Logger Log = LoggerFactory.getLogger(RsaUtil.class);
-    private String userPin;
-    private String keyAlias;
+
+    @ConfigProperty(name = "hsm.user-pin")
+    String userPin;
+
+    @ConfigProperty(name = "hsm.key-alias")
+    String keyAlias;
+
     private KeyStore hsmKeyStore;
 
-    public RsaUtil() {
-        this.userPin = "123456789"; // The pin to unlock the HSM-TOKEN
-        this.keyAlias = "rsaGenesis";
-        setup();
-    }
-
-    public RsaUtil(String configFilePath, String userPin, String keyID, String keyAlias) {
-        this.userPin = userPin;
-        this.keyAlias = keyAlias;
+    @PostConstruct
+    void init() {
         setup();
     }
 
@@ -80,6 +83,5 @@ public class RsaUtil {
         } catch (IOException | NoSuchAlgorithmException | CertificateException | KeyStoreException e) {
             Log.error(e.getClass() + e.getMessage());
         }
-
     }
 }
